@@ -80,10 +80,11 @@ GLFWwindow* window;
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
-const char* c_vs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\color.vs";
-const char* c_fs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\color.fs";
+const char* c_vs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\materialCube.vs";
+const char* c_fs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\materialCube.fs";
 const char* l_vs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\lightingCube.vs";
 const char* l_fs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\lightingCube.fs";
+
 #pragma endregion
 
 
@@ -139,20 +140,35 @@ int main()
 		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);//设置清空屏幕所用的颜色
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		lightPos.x = cos(glfwGetTime()) * 2.0f;
-		lightPos.y = sin(glfwGetTime()) * 2.0f;
+		lightPos.x = cos(glfwGetTime()) * 0.5f;
+		lightPos.y = sin(glfwGetTime()) * 0.5f;
 
 		cubeShader.use();
-		cubeShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-		cubeShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-		cubeShader.setVec3("lightPos", lightPos);
+		//传入光源和相机的世界坐标
+		cubeShader.setVec3("light.position", lightPos);
+		cubeShader.setVec3("viewPos", camera.Position);
 
+		glm::vec3 lightColor;
+		//随机光线的rgb值
+		lightColor.x = static_cast<float>(sin(glfwGetTime() * 2.0f));
+		lightColor.y = static_cast<float>(sin(glfwGetTime() * 0.7f));
+		lightColor.z = static_cast<float>(sin(glfwGetTime() * 1.3f));
+		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
+		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.1f);
+		cubeShader.setVec3("light.ambient", ambientColor);
+		cubeShader.setVec3("light.diffuse", diffuseColor);
+		cubeShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+		cubeShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+		cubeShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+		cubeShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); 
+		cubeShader.setFloat("material.shininess", 32.0f);
+
+		//传递矩阵信息
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
-
 		cubeShader.setMat4("projection", projection);
 		cubeShader.setMat4("view", view);
-
 		glm::mat4 model = glm::mat4(1.0f);
 		cubeShader.setMat4("model", model);
 
@@ -160,6 +176,11 @@ int main()
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		
 		lightShader.use();
+		//传递光照颜色给FS
+		lightShader.setVec3("light.ambient", ambientColor);
+		lightShader.setVec3("light.diffuse", diffuseColor);
+		lightShader.setVec3("light.specular", glm::vec3(1.0f));
+
 		lightShader.setMat4("projection", projection);
 		lightShader.setMat4("view", view);
 
