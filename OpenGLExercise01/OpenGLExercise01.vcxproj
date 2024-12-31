@@ -144,6 +144,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="directionLightCube.vs" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
@@ -161,12 +162,19 @@
   <ItemGroup>
     <None Include="color.fs" />
     <None Include="color.vs" />
+    <None Include="directionLightCube.fs" />
     <None Include="lightingCube.fs" />
     <None Include="lightingCube.vs" />
     <None Include="lightMapCube.fs" />
     <None Include="lightMapCube.vs" />
     <None Include="materialCube.fs" />
     <None Include="materialCube.vs" />
+    <None Include="multi_light.fs" />
+    <None Include="multi_light.vs" />
+    <None Include="pointLightCube.fs" />
+    <None Include="pointLightCube.vs" />
+    <None Include="spotLightCube.fs" />
+    <None Include="spotLightCube.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

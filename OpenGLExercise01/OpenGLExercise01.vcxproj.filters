@@ -32,6 +32,7 @@
     <ClInclude Include="stb_image.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="directionLightCube.vs" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="vertexSource.glsl" />
@@ -63,5 +64,12 @@
     <None Include="materialCube.vs" />
     <None Include="lightMapCube.fs" />
     <None Include="lightMapCube.vs" />
+    <None Include="multi_light.vs" />
+    <None Include="multi_light.fs" />
+    <None Include="directionLightCube.fs" />
+    <None Include="pointLightCube.vs" />
+    <None Include="pointLightCube.fs" />
+    <None Include="spotLightCube.vs" />
+    <None Include="spotLightCube.fs" />
   </ItemGroup>
 </Project>

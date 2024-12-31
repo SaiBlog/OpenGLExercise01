@@ -69,6 +69,19 @@ float vertices[] = {
 	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
 	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
 };
+glm::vec3 cubePositions[] =
+{
+	glm::vec3(0.0f,  0.0f,  0.0f),
+	glm::vec3(2.0f,  5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f,  3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f,  2.0f, -2.5f),
+	glm::vec3(1.5f,  0.2f, -1.5f),
+	glm::vec3(-1.3f,  1.0f, -1.5f)
+};
 #pragma endregion
 
 #pragma region moveParam
@@ -86,8 +99,8 @@ GLFWwindow* window;
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
-const char* c_vs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\lightMapCube.vs";
-const char* c_fs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\lightMapCube.fs";
+const char* c_vs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\spotLightCube.vs";
+const char* c_fs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\spotLightCube.fs";
 const char* l_vs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\lightingCube.vs";
 const char* l_fs = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\lightingCube.fs";
 const char* diffusemap_path = "D:\\0Exercise_OpenGL\\OpenGLExercise01\\OpenGLExercise01\\container2.png";
@@ -142,13 +155,11 @@ int main()
 	//读取贴图
 	unsigned int diffuseMap = loadTexture(diffusemap_path);
 	unsigned int specularMap = loadTexture(specularmap_path);
-	unsigned int emissionMap = loadTexture(emission_path);
 
 	//设置纹理索引
 	cubeShader.use();
 	cubeShader.setInt("material.diffuse", 0);
 	cubeShader.setInt("material.specular", 1);
-	cubeShader.setInt("material.emission", 2);
 
 
 	while (!glfwWindowShouldClose(window))//检查是否要退出
@@ -160,19 +171,22 @@ int main()
 		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);//设置清空屏幕所用的颜色
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		lightPos.x = cos(glfwGetTime()) * 2.0f;
-		lightPos.y = sin(glfwGetTime()) * 2.0f;
-		lightPos=glm::vec3(1.2f, 1.0f, 2.0f);
+		
 		cubeShader.use();
 		//传入光源和相机的世界坐标
-		cubeShader.setVec3("light.position", lightPos);
+		cubeShader.setVec3("light.position", camera.Position);
+		cubeShader.setVec3("light.direction", camera.Front);
+		cubeShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+		cubeShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
 		cubeShader.setVec3("viewPos", camera.Position);
 
 		cubeShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
 		cubeShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
 		cubeShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		cubeShader.setFloat("light.constant", 1.0f);
+		cubeShader.setFloat("light.linear", 0.09f);
+		cubeShader.setFloat("light.quadratic", 0.032f);
 
-		cubeShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); 
 		cubeShader.setFloat("material.shininess", 32.0f);
 
 		//传递矩阵信息
@@ -180,31 +194,43 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		cubeShader.setMat4("projection", projection);
 		cubeShader.setMat4("view", view);
+
 		glm::mat4 model = glm::mat4(1.0f);
-		cubeShader.setMat4("model", model);
+        cubeShader.setMat4("model", model);
 
 		//使用贴图
 		glActiveTexture(GL_TEXTURE0);//绑定在0号Texture
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, emissionMap);
+
+		//由于我们要绘制多个箱子，这里不要直接绘制
+		//glBindVertexArray(cubeVAO);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		glBindVertexArray(cubeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		
-		lightShader.use();
+		for (int i = 0; i < 10; i++)
+		{
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			float angle = 20.0f * i;
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			cubeShader.setMat4("model", model);
+
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+		/*lightShader.use();
 		lightShader.setMat4("projection", projection);
 		lightShader.setMat4("view", view);
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+		model = glm::scale(model, glm::vec3(0.2f)); 
 		lightShader.setMat4("model", model);
 
 		glBindVertexArray(lightCubeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLES, 0, 36);*/
 		
 
 		//控制事件交换缓冲
